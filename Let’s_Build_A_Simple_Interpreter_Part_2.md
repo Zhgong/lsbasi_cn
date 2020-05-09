@@ -187,3 +187,48 @@ calc> 27 - 7
 calc>
 ```
 
+与[第1部分](./Let’s_Build_A_Simple_Interpreter_Part_1.md)的版本相比，主要的代码变化是。
+
+1. get_next_token方法被重构了一下。将增量pos指针的逻辑并入入了一个单独的方法。
+2. 增加了两个方法：*skip_whitespace* 方法用于忽略空白字符，以及 *integer* 方法用于处理输入中的多位数整数。
+3. *expr* 方法被修改为除了 INTEGER -> PLUS -> INTEGER 序列之外，还可以识别 INTEGER -> MINUS -> INTEGER 序列。该方法现在在成功识别了相应的短语后，还可以解释加法和减法。
+
+在[第1部分](./Let’s_Build_A_Simple_Interpreter_Part_1.md)中，你学过两个重要的概念，即**标记**和**词法解析器**。今天我想跟大家谈一下**词位**、**解析**和**解析器**。
+
+你已经知道了什么是**标记**。但是，为了让更好地讨论**标记**，我需要提到词位。什么是词位？**词位**是组成标记的一串字符串。在下面的图片中，你可以看到一些标记和词位的例子，希望它能让你清楚地了解它们之间的关系：
+
+![](./images/02/lsbasi_part2_lexemes.png)
+
+现在，还记得我们的朋友，*expr* 方法吗？我之前说过，就是在那里对算术表达式进行解释的。但是在解释一个表达式之前，你首先需要识别出它是什么样的式子，比如说是加法还是减法。这就是 *expr* 方法的根本作用：它在从 *get_next_token* 方法得到的标识流中找到结构，然后对所识别的式子进行解释，求出算术表达式的结果。
+
+在标识流中寻找结构的过程，或者换句话说，在标识流中识别算式的过程被称为**解析**。解释器或编译器中执行这项工作的部分被称为**解析器**。
+
+所以现在你知道了 *expr* 方法是你的解释器的一部分，在这里，**解析**和**解释**都在这里进行-- *expr* 方法首先尝试识别（**解析**）标识流中的INTEGER -> PLUS -> INTEGER或INTEGER -> MINUS -> INTEGER短语，在成功识别（**解析**）了其中一个短语后，该方法对其进行解释，并返回两个整数的加减结果给调用者。
+
+现在又到了练习的时候了。
+
+![](./images/02/lsbasi_part2_exercises.png)
+
+1. 将计算器扩展到能处理两个整数的乘法运算。
+2. 将计算器扩展到能处理两个整数的除法运算
+3. 修改代码以解释包含任意数量的加减法的表达式，例如 "9 - 5 + 3 + 11"
+
+### 检查你的是否完全理解了
+
+1、什么是词位？
+2. 在标记流中找到结构的过程的名称是什么，或者换个说法，在该标记流中识别某个短语的过程的名称是什么？
+3. 解释器（编译器）中进行解析的部分的名称是什么？
+
+希望大家喜欢今天的课程。在本系列的下一篇文章中，你将扩展你的计算器，以处理更复杂的算术表达式。请继续关注。
+
+下面是我推荐的书单，它们对你学习解释器和编译器有帮助。
+
+1. [Language Implementation Patterns: Create Your Own Domain-Specific and General Programming Languages (Pragmatic Programmers)](http://www.amazon.com/gp/product/193435645X/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=193435645X&linkCode=as2&tag=russblo0b-20&linkId=MP4DCXDV6DJMEJBL)
+
+2. [Writing Compilers and Interpreters: A Software Engineering Approach](http://www.amazon.com/gp/product/0470177071/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=0470177071&linkCode=as2&tag=russblo0b-20&linkId=UCLGQTPIYSWYKRRM)
+
+3. [Modern Compiler Implementation in Java](http://www.amazon.com/gp/product/052182060X/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=052182060X&linkCode=as2&tag=russblo0b-20&linkId=ZSKKZMV7YWR22NMW)
+
+4. [Modern Compiler Design](http://www.amazon.com/gp/product/1461446988/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=1461446988&linkCode=as2&tag=russblo0b-20&linkId=PAXWJP5WCPZ7RKRD)
+
+5. [Compilers: Principles, Techniques, and Tools (2nd Edition)](http://www.amazon.com/gp/product/0321486811/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=0321486811&linkCode=as2&tag=russblo0b-20&linkId=GOEGDQG4HIHU56FQ)
