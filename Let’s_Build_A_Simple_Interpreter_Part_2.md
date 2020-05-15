@@ -221,7 +221,7 @@ calc>
 
 希望大家喜欢今天的课程。在本系列的下一篇文章中，你将扩展你的计算器，以处理更复杂的算术表达式。请继续关注。
 
-下面是我推荐的书单，它们对你学习解释器和编译器有帮助。
+下面是我推荐的书单，它们对你学习解释器和编译器非常有帮助。
 
 1. [Language Implementation Patterns: Create Your Own Domain-Specific and General Programming Languages (Pragmatic Programmers)](http://www.amazon.com/gp/product/193435645X/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=193435645X&linkCode=as2&tag=russblo0b-20&linkId=MP4DCXDV6DJMEJBL)
 
