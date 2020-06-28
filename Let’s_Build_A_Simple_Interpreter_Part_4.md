@@ -102,6 +102,64 @@
 
 ![](./images/04/lsbasi_part4_rules.png)
 
+让我们开始行动起来，按照上面的准则将我们的语法转换为代码。
+
+在我们的语法中，有两个规则：一个是 *expr* 规则，一个是 *factor* 规则。我们先说说factor规则（生产）。根据指南，你需要创建一个名为 *factor* 的方法（指南1），该方法有一个单次调用 *eat* 方法来消耗 INTEGER 标记（指南4）。
+
+```python
+def factor(self):
+    self.eat(INTEGER)
+```
+
+这很容易，对不对？
+
+继续!
+
+规则 *expr* 成为 *expr* 方法(同样根据准则1)。规则的主体以对 *factor* 的引用开始，成为 *factor()* 方法调用。可选的分组 *(...)** 变成了一个 *while* 循环，*(MUL | DIV)* 备选方案变成了一个 *if-elif-else* 语句。通过将这些片段组合在一起，我们得到了下面的 *expr* 方法。
+
+```python
+def expr(self):
+    self.factor()
+
+    while self.current_token.type in (MUL, DIV):
+        token = self.current_token
+        if token.type == MUL:
+            self.eat(MUL)
+            self.factor()
+        elif token.type == DIV:
+            self.eat(DIV)
+            self.factor()
+```
+
+请花点时间，研究一下我是如何将语法映射到源代码的。确保你理解这部分内容，理解之后后面的内容就容易理解了。
+
+为了减轻你的负担，我把上面的代码放到了 *parser.py* 文件中，这个文件包含了一个词法器和一个没有解释器的解析器。你可以直接从 [GitHub](https://github.com/rspivak/lsbasi/blob/master/part4/parser.py) 上下载这个文件，然后玩一玩。它有一个交互式的提示，你可以输入表达式，并查看它们是否工作正常：也就是说，根据语法构建的解析器是否能识别表达式。
+
+在我电脑上运行的一个示例会话：
+```bash
+$ python parser.py
+calc> 3
+calc> 3 * 7
+calc> 3 * 7 / 2
+calc> 3 *
+Traceback (most recent call last):
+  File "parser.py", line 155, in <module>
+    main()
+  File "parser.py", line 151, in main
+    parser.parse()
+  File "parser.py", line 136, in parse
+    self.expr()
+  File "parser.py", line 130, in expr
+    self.factor()
+  File "parser.py", line 114, in factor
+    self.eat(INTEGER)
+  File "parser.py", line 107, in eat
+    self.error()
+  File "parser.py", line 97, in error
+    raise Exception('Invalid syntax')
+Exception: Invalid syntax
+```
+
 下面是我推荐的书单，它们对你学习解释器和编译器非常有帮助。
 
 1. [Language Implementation Patterns: Create Your Own Domain-Specific and General Programming Languages (Pragmatic Programmers)](http://www.amazon.com/gp/product/193435645X/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=193435645X&linkCode=as2&tag=russblo0b-20&linkId=MP4DCXDV6DJMEJBL)
