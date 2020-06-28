@@ -45,14 +45,6 @@
 
 ![](./images/04/lsbasi_part4_bnf3.png)
 
-<<<<<<< HEAD
-
-
-
-
-
-
-=======
 在我上面展示的语法中，像 MUL、DIV 和 INTEGER 这样的标记称为***终端***，像 *expr* 和*factor* 这样的变量称为***非终端***。非终端通常由一系列的终端和/或非终端组成。
 
 ![](./images/04/lsbasi_part4_bnf4.png)
@@ -109,7 +101,6 @@
 直观上来看，指南是这样的：
 
 ![](./images/04/lsbasi_part4_rules.png)
->>>>>>> master
 
 下面是我推荐的书单，它们对你学习解释器和编译器非常有帮助。
 
