@@ -95,7 +95,7 @@
 
 - 语法中定义的每一条规则 **R**，都会成为一个同名的方法，对该规则的引用也会成为一个方法调用：***R()***. 方法的主体遵循规则主体的流程，使用相同的准则。
 - 可选项**(a1 | a2 | aN)** 成为 ***if-elif-else*** 语句。
-- 可选的分组 **(...)*** 成为一个 ***while*** 语句，可以循环0次或更多次。
+- 可多次匹配的分组 **(...)*** 成为一个 ***while*** 语句，可以循环0次或更多次。
 - 每一个标记引用 **T** 都成为对方法 **eat：eat(T)** 的调用。*eat* 方法的工作方式是，如果标记 *T*与当前的*预期*的标记相匹配，它就会消耗这个标记，然后从分词器中获取一个新的标记，并将该标记赋值给current_token内部变量。
 
 直观上来看，指南是这样的：
@@ -160,14 +160,216 @@ Traceback (most recent call last):
 Exception: Invalid syntax
 ```
 
-下面是我推荐的书单，它们对你学习解释器和编译器非常有帮助。
+试试看!
 
+我忍不住又要提到语法图。同样的 *expr* 规则的语法图是这样的。
+
+![](./images/04/lsbasi_part4_sd.png)
+
+是时候深入研究一下我们新的算术表达式解释器的源代码了。下面是一个计算器的代码，它可以处理包含整数和任意数量的乘法和除法（整数除法）运算符的有效算术表达式。你还可以看到，我将词法分析器重构为一个独立的类 *Lexer* ，并更新了 *Interpreter* 类，以 *Lexer* 实例为参数。
+
+```python
+# 标记（Token）类型
+#
+# 标记EOF(end-of-file)用于表示
+# 没有更多的输入需要进行词法分析。
+INTEGER, MUL, DIV, EOF = 'INTEGER', 'MUL', 'DIV', 'EOF'
+
+
+class Token(object):
+    def __init__(self, type, value):
+        # 标记类型: INTEGER, MUL, DIV, or EOF
+        self.type = type
+        # 标记值: 非负的整数, '*', '/', or None
+        self.value = value
+
+    def __str__(self):
+        """类实例的字符串表示。
+
+        例子：
+            Token(INTEGER, 3)
+            Token(MUL '*')
+        """
+        return 'Token({type}, {value})'.format(
+            type=self.type,
+            value=repr(self.value)
+        )
+
+    def __repr__(self):
+        return self.__str__()
+
+
+class Lexer(object):
+    def __init__(self, text):
+        # 输入的字符串，如： "3 * 5", "12 / 3 * 4"
+        self.text = text
+        # self.pos为指向self.text的索引
+        self.pos = 0
+        self.current_char = self.text[self.pos]
+
+    def error(self):
+        raise Exception('Invalid character')
+
+    def advance(self):
+        """推进 `pos` 指针并设置 `current_char` 变量。"""
+        self.pos += 1
+        if self.pos > len(self.text) - 1:
+            self.current_char = None  # Indicates end of input
+        else:
+            self.current_char = self.text[self.pos]
+
+    def skip_whitespace(self):
+        while self.current_char is not None and self.current_char.isspace():
+            self.advance()
+
+    def integer(self):
+        """返回一个从输入中并被消耗掉的（多位数）整数。"""
+        result = ''
+        while self.current_char is not None and self.current_char.isdigit():
+            result += self.current_char
+            self.advance()
+        return int(result)
+
+    def get_next_token(self):
+        """词汇分析器(又称扫描器或标记器)
+
+        此方法负责断句
+        分开成标记。一次一个标记。
+        """
+        while self.current_char is not None:
+
+            if self.current_char.isspace():
+                self.skip_whitespace()
+                continue
+
+            if self.current_char.isdigit():
+                return Token(INTEGER, self.integer())
+
+            if self.current_char == '*':
+                self.advance()
+                return Token(MUL, '*')
+
+            if self.current_char == '/':
+                self.advance()
+                return Token(DIV, '/')
+
+            self.error()
+
+        return Token(EOF, None)
+
+
+class Interpreter(object):
+    def __init__(self, lexer):
+        self.lexer = lexer
+        # 将当前的标记设置为输入中的第一个标记
+        self.current_token = self.lexer.get_next_token()
+
+    def error(self):
+        raise Exception('Invalid syntax')
+
+    def eat(self, token_type):
+        # 比较当前标记的类型与传递进来的标记的类型，
+        # 如果两者匹配，则 "吃掉"（eat）当前标记，
+        # 并获取下一个标记分配给self.current_token，
+        # 否则会抛出异常
+        if self.current_token.type == token_type:
+            self.current_token = self.lexer.get_next_token()
+        else:
+            self.error()
+
+    def factor(self):
+        """返回一个INTEGER标记值。
+
+        factor : INTEGER
+        """
+        token = self.current_token
+        self.eat(INTEGER)
+        return token.value
+
+    def expr(self):
+        """算术表达式解析器/解释器。
+
+        expr   : factor ((MUL | DIV) factor)*
+        factor : INTEGER
+        """
+        result = self.factor()
+
+        while self.current_token.type in (MUL, DIV):
+            token = self.current_token
+            if token.type == MUL:
+                self.eat(MUL)
+                result = result * self.factor()
+            elif token.type == DIV:
+                self.eat(DIV)
+                result = result / self.factor()
+
+        return result
+
+
+def main():
+    while True:
+        try:
+            # 在python3环境下，使用“input”代替“raw_input”
+            text = raw_input('calc> ')
+        except EOFError:
+            break
+        if not text:
+            continue
+        lexer = Lexer(text)
+        interpreter = Interpreter(lexer)
+        result = interpreter.expr()
+        print(result)
+
+
+if __name__ == '__main__':
+    main()
+```
+将上面的代码保存为 *calc4.py* 文件，或者直接从 [GitHub](https://github.com/rspivak/lsbasi/blob/master/part4/calc4.py) 下载。跟以前一样，试一试，看看它是否工作正常。
+
+这是我在电脑上运行的一个示例会话：
+
+```bash
+$ python calc4.py
+calc> 7 * 4 / 2
+14
+calc> 7 * 4 / 2 * 3
+42
+calc> 10 * 4  * 2 * 3 / 8
+30
+```
+
+我知道你已经迫不及待地想知道这部分的内容了：) 下面是今天的新练习：
+![](./images/04/lsbasi_part4_exercises.png)
+
+- 写一个语法来描述包含任意数量的+、-、*或/运算符的算术表达式。利用该语法，你应该能够推导出 "2 + 7 * 4"、"7 - 8 / 4"、"14 + 2 * 3 - 6 / 2 "等表达式。
+- 使用该语法，编写一个解释器，它可以运算包含任意数量的+、-、*或/运算符的算术表达式。你的解释器应该能够处理 "2 + 7 * 4"、"7 - 8 / 4"、"14 + 2 * 3 - 6 / 2 "等表达式。
+如果你已经完成了上述练习，请放松并享受:)
+。
+
+**检查你是否理解了**
+
+牢记今天文章中的语法，根据需要参照下图，回答下列问题：
+![](./images/04/lsbasi_part4_bnf1.png)
+
+1. 什么是上下文无关语法（grammar）？
+2. 语法有多少条规则/产物？
+3. 什么是终端？(找出图片中的所有终端)
+4. 什么是非终端？(找出图片中所有的非终端)
+5. 什么是规则的头？(找出图中所有的头/左手边)
+6. 什么是规则的主体？(找出图中所有的主体/右侧)
+7. 语法的起始符号是什么？
+
+嘿，你都读到最后了! 这篇文章包含了相当多的理论，所以我真的为你完成它而感到骄傲。
+
+下一次我会带着新的文章回来--敬请期待，别忘了通过做练习帮你巩固知识。
+
+下面是我推荐的书单，它们对你学习解释器和编译器非常有帮助：
 1. [Language Implementation Patterns: Create Your Own Domain-Specific and General Programming Languages (Pragmatic Programmers)](http://www.amazon.com/gp/product/193435645X/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=193435645X&linkCode=as2&tag=russblo0b-20&linkId=MP4DCXDV6DJMEJBL)
 
-2. [Writing Compilers and Interpreters: A Software Engineering Approach](http://www.amazon.com/gp/product/0470177071/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=0470177071&linkCode=as2&tag=russblo0b-20&linkId=UCLGQTPIYSWYKRRM)
+2.  [Writing Compilers and Interpreters: A Software Engineering Approach](http://www.amazon.com/gp/product/0470177071/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=0470177071&linkCode=as2&tag=russblo0b-20&linkId=UCLGQTPIYSWYKRRM)
 
-3. [Modern Compiler Implementation in Java](http://www.amazon.com/gp/product/052182060X/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=052182060X&linkCode=as2&tag=russblo0b-20&linkId=ZSKKZMV7YWR22NMW)
+3.  [Modern Compiler Implementation in Java](http://www.amazon.com/gp/product/052182060X/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=052182060X&linkCode=as2&tag=russblo0b-20&linkId=ZSKKZMV7YWR22NMW)
 
-4. [Modern Compiler Design](http://www.amazon.com/gp/product/1461446988/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=1461446988&linkCode=as2&tag=russblo0b-20&linkId=PAXWJP5WCPZ7RKRD)
+4.  [Modern Compiler Design](http://www.amazon.com/gp/product/1461446988/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=1461446988&linkCode=as2&tag=russblo0b-20&linkId=PAXWJP5WCPZ7RKRD)
 
-5. [Compilers: Principles, Techniques, and Tools (2nd Edition)](http://www.amazon.com/gp/product/0321486811/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=0321486811&linkCode=as2&tag=russblo0b-20&linkId=GOEGDQG4HIHU56FQ)
+5.  [Compilers: Principles, Techniques, and Tools (2nd Edition)](http://www.amazon.com/gp/product/0321486811/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=0321486811&linkCode=as2&tag=russblo0b-20&linkId=GOEGDQG4HIHU56FQ)

@@ -9,3 +9,9 @@
 
 ## [从零开始写个简单的解释器（3）](./Let’s_Build_A_Simple_Interpreter_Part_3.md)
 介绍语法图（syntax diagram）。如何语法图映射到代码中。
+
+## [从零开始写个简单的解释器（4）](./Let’s_Build_A_Simple_Interpreter_Part_4.md)
+引入“巴科斯范式 Backus-Naur Form”
+- 语法中定义的每一条规则都会成为一个同名的方法，
+- 可选项**(a1 | a2 | aN)** 成为 ***if-elif-else*** 语句。
+- 可多次匹配的分组 **(...)*** 成为一个 ***while*** 语句，可以循环0次或更多次。
