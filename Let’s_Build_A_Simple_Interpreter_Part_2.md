@@ -187,9 +187,7 @@ calc> 27 - 7
 calc>
 ```
 
-与[第1部分](./Let
-
-’s_Build_A_Simple_Interpreter_Part_1.md)相比，主要的代码变化有：
+与[第1部分](./Let’s_Build_A_Simple_Interpreter_Part_1.md)相比，主要的代码变化有：
 
 1. 重构了 get_next_token 方法，将指针增量逻辑提取到一个独立的方法中。
 2. 增加了两个新方法：*skip_whitespace* 用于忽略空白字符，*integer* 用于处理多位数整数。
